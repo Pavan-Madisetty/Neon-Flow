@@ -18,6 +18,10 @@ class Services {
     levels = await LevelRepository.load();
     progress = ProgressStore();
     await progress.load();
+    progress.difficultyStarts = {
+      for (final d in Difficulty.values)
+        levels.levels.firstWhere((l) => l.difficulty == d).id,
+    };
     monetization = MonetizationConfig();
     await monetization.load();
     audio = AudioService(progress);

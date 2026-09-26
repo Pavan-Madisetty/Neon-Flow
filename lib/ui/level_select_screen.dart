@@ -13,7 +13,7 @@ class LevelSelectScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Open on the tab of the player's current level.
-    final current = Services.progress.highestUnlocked.clamp(1, Services.levels.total);
+    final current = Services.progress.continueLevel(Services.levels.total);
     final initial = Services.levels.byId(current).difficulty.index;
     return DefaultTabController(
       length: 3,
@@ -148,7 +148,10 @@ class _LevelTile extends StatelessWidget {
     final progress = Services.progress;
     final unlocked = progress.isUnlocked(level.id);
     final stars = progress.starsFor(level.id);
-    final isCurrent = level.id == progress.highestUnlocked;
+    final diffLevels =
+        Services.levels.levels.where((l) => l.difficulty == level.difficulty);
+    final isCurrent = level.id ==
+        progress.currentIn(diffLevels.first.id, diffLevels.last.id);
     return GestureDetector(
       onTap: () {
         if (!unlocked) {

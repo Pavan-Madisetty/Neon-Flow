@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
             builder: (context, _) {
               final p = Services.progress;
               final total = Services.levels.total;
-              final next = p.highestUnlocked.clamp(1, total);
+              final next = p.continueLevel(total);
               final started = p.completedCount > 0;
               return Column(
                 children: [

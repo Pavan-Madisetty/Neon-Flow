@@ -13,6 +13,11 @@ class ProgressStore extends ChangeNotifier {
   bool _sound = true;
   bool _haptics = true;
   int _levelsSinceAd = 0;
+  int _lastWon = 0;
+
+  /// Level ids that are always open (the first level of each difficulty).
+  /// Set by [Services.init] once the level list is known.
+  Set<int> difficultyStarts = {1};
 
   bool get soundOn => _sound;
   bool get hapticsOn => _haptics;
@@ -24,6 +29,7 @@ class ProgressStore extends ChangeNotifier {
     _hints = _prefs.getInt('hints') ?? AppConfig.startingHints;
     _sound = _prefs.getBool('sound') ?? true;
     _haptics = _prefs.getBool('haptics') ?? true;
+    _lastWon = _prefs.getInt('last_won') ?? 0;
     for (final key in _prefs.getKeys()) {
       if (key.startsWith('stars_')) {
         _stars[int.parse(key.substring(6))] = _prefs.getInt(key) ?? 0;
@@ -41,16 +47,26 @@ class ProgressStore extends ChangeNotifier {
   int get completedCount => _stars.values.where((s) => s > 0).length;
   int get totalStars => _stars.values.fold(0, (a, b) => a + b);
 
-  /// The highest level id the player may currently open.
-  int get highestUnlocked {
-    var n = 0;
-    while (isCompleted(n + 1)) {
-      n++;
+  /// Each difficulty can be started at any time, but its levels must be
+  /// played in order: a level is open if it is the first of its difficulty
+  /// or the level before it has been completed.
+  bool isUnlocked(int levelId) =>
+      difficultyStarts.contains(levelId) || isCompleted(levelId - 1);
+
+  /// The next level to play within [firstId]..[lastId]: the first level in that
+  /// range that is not yet completed (or [lastId] if all are done).
+  int currentIn(int firstId, int lastId) {
+    for (var i = firstId; i <= lastId; i++) {
+      if (!isCompleted(i)) return i;
     }
-    return n + 1;
+    return lastId;
   }
 
-  bool isUnlocked(int levelId) => levelId <= highestUnlocked;
+  /// Where the "Continue" button should go: the level after the last one won.
+  int continueLevel(int total) {
+    if (_lastWon <= 0) return 1;
+    return (_lastWon + 1).clamp(1, total);
+  }
 
   int starsInRange(int firstId, int lastId) {
     var t = 0;
@@ -70,6 +86,8 @@ class ProgressStore extends ChangeNotifier {
       _bestMoves[levelId] = moves;
       await _prefs.setInt('best_$levelId', moves);
     }
+    _lastWon = levelId;
+    await _prefs.setInt('last_won', levelId);
     _levelsSinceAd++;
     notifyListeners();
   }
@@ -110,6 +128,8 @@ class ProgressStore extends ChangeNotifier {
     }
     _stars.clear();
     _bestMoves.clear();
+    _lastWon = 0;
+    await _prefs.remove('last_won');
     notifyListeners();
   }
 }
