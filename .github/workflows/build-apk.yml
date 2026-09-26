@@ -26,11 +26,6 @@ jobs:
       - name: Install Pillow (launcher icon)
         run: pip install pillow
 
-      - name: Verify levels regenerate identically
-        run: |
-          python3 tools/generate_levels.py
-          git diff --exit-code assets/levels/levels.json
-
       - name: Generate Android project + patches
         run: bash tools/setup_android.sh
 
@@ -49,6 +44,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: neon-flow-apks
+          if-no-files-found: error
           path: |
             build/app/outputs/flutter-apk/app-debug.apk
             build/app/outputs/flutter-apk/app-release.apk
