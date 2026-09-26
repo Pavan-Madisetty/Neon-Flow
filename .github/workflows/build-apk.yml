@@ -20,6 +20,8 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Pinned: newer Flutter bundles Gradle 9, which breaks google_mobile_ads 5.3.x
+          flutter-version: "3.32.x"
           channel: stable
           cache: true
 
